@@ -1,0 +1,7 @@
+INDEX VERSION 1.3+C:\Users\USER\Desktop\NILI_30.10.15\Development\app\workspace - android_new\nili_v2.0_correctIncorrect\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
+3293785681.index
+323858117.index
+2970255504.index
+3859309476.index
+3341034480.index
+1068618129.index

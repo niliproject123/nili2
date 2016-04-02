@@ -1,0 +1,16 @@
+INDEX VERSION 1.127+C:\Users\USER\Desktop\NILI_30.10.15\Development\app\workspace-android\nili_v1.6\.metadata\.plugins\org.eclipse.jdt.core
+1703822935.index
+3590160502.index
+4279907321.index
+4286689195.index
+440707955.index
+2475707786.index
+4091951991.index
+329499795.index
+4104115789.index
+150924814.index
+3095503683.index
+2242342111.index
+3842564746.index
+1281768435.index
+2106357130.index

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename function &apos;eventStopAnimation()&apos; to &apos;eventLiftFingers&apos;&#x0D;&#x0A;- Original project: &apos;assets&apos;&#x0D;&#x0A;- Original element: &apos;eventStopAnimation()&apos;&#x0D;&#x0A;- Renamed element: &apos;eventLiftFingers()&apos;&#x0D;&#x0A;- Update references to refactored element" delegate="false" deprecate="false" description="Rename function &apos;eventStopAnimation&apos;" flags="589830" id="org.eclipse.wst.jsdt.ui.rename.method" input="/&lt;{try.js~eventStopAnimation" name="eventLiftFingers" references="true" stamp="1451670943379" version="1.0"/>
+</session>

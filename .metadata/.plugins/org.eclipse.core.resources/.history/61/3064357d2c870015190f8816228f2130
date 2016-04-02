@@ -1,0 +1,73 @@
+html
+{
+	overflow: hidden;
+	position: fixed;
+	scroll: no;
+}
+
+div, img, span, table
+{
+	font-family: Courier New;
+	font-weight: bold;
+	position: absolute;	
+	/*border: 1px black solid;*/
+	/*opacity: 0.4;*/
+
+	margin: 0px;
+	padding: 0px;
+	text-align: center;
+	vertical-align: top;
+	z-index: 1;
+}
+
+.chord
+{
+	color: yellow;
+	text-shadow: 5px 5px 2px black;
+	font-stretch: condensed;
+}
+
+.next
+{
+	opacity: 0.4;
+}
+
+.text
+{
+	color: white;
+	text-shadow: 5px 5px 2px black;
+}
+
+.play
+{
+	color: green;
+	text-shadow: 5px 5px 2px black;
+	opacity: 1;
+	visibility: hidden; 
+	
+	animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker 
+{  
+  50% { opacity: 0.0; }
+}
+
+
+.position_td
+{
+	text-align: right;
+    background-color:#00a2e8;
+    font-family: Arial;
+    font-weight:bold;
+    overflow:hidden;
+	opacity: 0.2;
+
+	
+    transition: opacity 0.5s;
+
+    
+    /*font-size:150px;
+    line-height:20px;*/
+}
+

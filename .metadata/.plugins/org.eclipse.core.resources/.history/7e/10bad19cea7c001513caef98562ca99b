@@ -1,0 +1,418 @@
+var TOTAL_NUMBER_OF_FRETS = 5;
+var TOTAL_NUMBER_OF_STRINGS = 6;
+
+var maxUiElements = 6;
+var uiElements = new Array();
+var top = 0;
+var neck = 1;
+var chord = 2;
+var lyrics = 3;
+var play = 4;
+var stop = 5;
+var title = 6;
+
+var chordElementList = $(".chord");
+var lyricsElementList = $(".lyrics");
+$.each($(chordElementList), function(){this.style.display = "none"});
+$.each($(lyricsElementList), function(){this.style.display = "none"});
+$("#title").hide();
+
+
+var windowWidth = $(window).width();
+var windowHeight = $(window).height();
+var ratioWidth = windowWidth/3456; 
+var ratioHeight = windowHeight/5184; 
+
+var element_background = document.createElement('img');
+var element_title = document.createElement('div');
+var element_neck = document.createElement('img');
+var element_bottom_stripe = document.createElement('img');
+var element_chord = document.createElement('span');
+var element_lyrics = document.createElement('span');
+var element_logo = document.createElement('img');
+var element_next = document.createElement('span');
+
+var currentChordIndex = 0;
+
+var buttonPlay = document.createElement('span');
+buttonPlay.style.color = "white";
+var buttonStop = document.createElement('div');
+var neckPositions, neckFrets;
+var neckPositionElementArray  = new Array()
+
+var currentStrummingString;
+var strummingInterval;
+
+var isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1; //&& ua.indexOf("mobile");
+
+createElements();
+createTable();
+setChordAndLyrics();
+blink();
+
+document.body.appendChild(buttonPlay);
+setPosition(buttonPlay, 0.5, 0.5, 0.1, 0.1);
+
+// 3rd         1st   controls
+// A     B     C     D
+// 123456123456123456123456
+// 000001000001000001000000
+// 100001010000000000000000
+// 100001000000000000000000
+var clickIndex = 0;
+if(!isAndroid)
+{
+	document.body.onclick = 
+		function()
+		{
+			strummingInterval = 150;
+			eventForward();
+			return;
+		};
+}
+
+if(isAndroid)
+	document.body.onload = function(){
+		sendCurrentChordToAndroid();
+	};
+
+
+
+function sendCurrentChordToAndroid()
+{
+	var currentChordToAndroid = getChordPositionList(chordElementList[currentChordIndex].innerHTML);
+	currentChordToAndroid = convertPositionListToString(currentChordToAndroid);
+	
+	//  test 
+	//Android.setCurrentChord("100000000000000000000000");
+	Android.setCurrentChord(currentChordToAndroid.toString());
+	Android.setCurrentChordTopString(
+			getChordTopString(chordElementList[currentChordIndex].innerHTML));
+}
+
+function convertPositionListToString(positionList)
+{
+	var returnedString = "000000000000000000000000";
+	
+	for(var i=0; i<positionList.length; i++)
+	{
+		var fret = positionList[i][0];
+		var string = positionList[i][1];
+		var replaceIndex = 24 - (fret*6 + string);
+		returnedString = returnedString.substr(0,replaceIndex) + '1' + returnedString.substr(replaceIndex+1);
+	}
+	
+	return returnedString;
+}
+
+function receivePositionStringFromAndroid(_positionString)
+{
+	var positionOnList = new Array();
+	var positionBlinkList = new Array();
+	var fretIndex, stringIndex;
+	var positionString = _positionString;
+
+	for(var i=0; i<positionString.length-6; i++)
+	{
+		var fretIndex =  4 - (1 + Math.floor(i/6));
+		var stringIndex = (6 - i%6);
+		var position = [fretIndex, stringIndex]; 
+		if(positionString.charAt(i)=='1')
+		{
+			positionOnList.push(position);
+			continue;
+		}
+		if(positionString.charAt(i)!='1' && positionString.charAt(i)!='0')
+		{
+			positionBlinkList.push(position);
+			continue;
+		}
+	}
+
+	setAllNeckPositionsOff(true);
+	setNeckPositionListOn(positionOnList);
+	updateBlinkingList(positionBlinkList);
+}
+
+var blinkingList;
+var isBlinkOn = false;
+var BLINK_INTERVAL = 200;
+
+function updateBlinkingList(newBlinkingList)
+{
+	if(blinkingList==null)
+	{
+		blinkingList = newBlinkingList;
+		return;
+	}
+	blinkingList = newBlinkingList;
+}
+
+function blink()
+{
+	if(blinkingList==null)
+	{
+		setTimeout(function(){blink();}, BLINK_INTERVAL);
+		return;
+	}
+	if(isBlinkOn)
+	{
+		setNeckPositionListOff(blinkingList);
+		isBlinkOn = false;
+	}
+	else
+	{
+		setNeckPositionListOn(blinkingList);
+		isBlinkOn = true;
+	}
+	
+	setTimeout(function(){blink();}, BLINK_INTERVAL)
+}
+//high
+
+function eventForward(strummingInterval)
+{
+	buttonPlay.innerHTML = strummingInterval;
+	buttonPlay.style.display = "inline";
+	
+	lightString(getChordTopString(chordElementList[currentChordIndex].innerHTML));
+	strummingInterval = strummingInterval;
+}
+
+function lightString(string)
+{
+	if(string==0) moveToNextChord();
+	
+	setAllNeckPositionsOff(true);
+	var stringList = [[3,string],[2,string],[1,string]];
+	setNeckPositionListOn(stringList);
+
+	currentStrummingString = string -1;
+	window.setTimeout(function(){lightString(currentStrummingString)}, strummingInterval)
+}
+
+function moveToNextChord()
+{
+	if(currentChordIndex+1>=chordElementList.length) return;
+
+	currentChordIndex++;
+	setChordAndLyrics();
+	
+	sendCurrentChordToAndroid();
+}
+
+function eventBack()
+{
+	if(currentChordIndex-1<0) return;
+
+	currentChordIndex--;
+	setChordAndLyrics();
+}
+
+function eventStop()
+{
+	currentChordIndex = 0;
+	setChordAndLyrics();
+}
+
+function setChordAndLyrics()
+{
+	element_chord.innerHTML = chordElementList[currentChordIndex].innerHTML;
+	element_lyrics.innerHTML = lyricsElementList[currentChordIndex].innerHTML;
+	if(currentChordIndex+1<chordElementList.length)
+		element_next.innerHTML = chordElementList[currentChordIndex+1].innerHTML;
+	else
+		element_next.innerHTML = "";
+
+	setAllNeckPositionsOff(false);
+	setNeckPositionListOn(getChordPositionList(element_chord.innerHTML));
+}
+
+function getChordPositionList(chord)
+{
+	// [fret,string,finger]
+	switch(chord)
+	{
+		case 'G':
+			return [[3,6,3],[2,5,2],[3,1,4]];
+		case 'C':
+			return [[3,5,3],[2,4,2],[1,2,1]];
+		case 'D':
+			return [[2,3,2],[3,2,4],[2,1,3]];
+	}
+}
+
+function  getChordTopString(chord)
+{
+	switch(chord)
+	{
+		case 'G':
+			return 6;
+		case 'C':
+			return 5;
+		case 'D':
+			return 4;
+	}
+}
+
+function setNeckPositionListOn(positionList)
+{
+	for(var i=0; i<positionList.length; i++)
+	{
+		setNeckPositionOn(positionList[i][0], positionList[i][1], positionList[i][2])
+	}
+}
+
+function setNeckPositionListOff(positionList)
+{
+	for(var i=0; i<positionList.length; i++)
+	{
+		setNeckPositionOff(positionList[i][0], positionList[i][1], positionList[i][2])
+	}
+}
+
+function setNeckPositionOn(fret, string, finger)
+{
+	if(neckFrets==null) neckFrets = document.getElementsByClassName("fret_table");
+	var position = neckPositionElementArray[fret-1][6-string]; 
+
+	if(finger!=null) position.innerHTML = finger;
+	position.style.opacity = "1";
+	
+}
+
+function setNeckPositionOff(fret, string, finger)
+{
+	if(neckFrets==null) neckFrets = document.getElementsByClassName("fret_table");
+	var position = neckPositionElementArray[fret-1][6-string]; 
+
+	if(finger!=null) position.innerHTML = '';
+	position.style.opacity = "0.2";
+	
+}
+
+function setAllNeckPositionsOff(leaveFingering)
+{
+	if(neckPositions==null) neckPositions = document.getElementsByClassName("position_td");
+	for(var i=0; i<neckPositions.length; i++)
+	{
+		neckPositions[i].style.opacity = "0.2";
+		if(!leaveFingering) neckPositions[i].innerHTML = "";
+	}
+}
+
+function createTable()
+{
+	neckPositionElementArray = new Array(TOTAL_NUMBER_OF_FRETS);
+	for(var i=0; i<TOTAL_NUMBER_OF_FRETS; i++)
+	{
+		neckPositionElementArray[i] = new Array();
+	}
+	
+	for(var j=0; j<TOTAL_NUMBER_OF_FRETS; j++)
+	{
+		var element_neck_fret = document.createElement('table');
+		element_neck_fret.className = "fret_table";
+		for(var i=0; i<TOTAL_NUMBER_OF_STRINGS; i++)
+		{
+			element_neck_fret.appendChild(document.createElement('tr'));
+			element_neck_fret.rows[i].appendChild(document.createElement('td'));
+			element_neck_fret.rows[i].cells[0].style.width = windowWidth*0.1;
+			element_neck_fret.rows[i].cells[0].style.height = windowHeight*0.0515;
+			element_neck_fret.rows[i].cells[0].className = "position_td";
+
+			var backgroundColor;
+			if(j%2==0)
+				backgroundColor = "#fffe79";
+			else
+				backgroundColor = "#ff7979";
+
+			element_neck_fret.rows[i].cells[0].style.backgroundColor = backgroundColor;
+			element_neck_fret.rows[i].cells[0].style.boxShadow = "0px 0px 10px 3px "+ backgroundColor;
+			
+			element_neck_fret.rows[i].cells[0].style.fontSize = $(element_neck_fret.rows[i].cells[0]).height()*2 + "px";
+			element_neck_fret.rows[i].cells[0].style.lineHeight = $(element_neck_fret.rows[i].cells[0]).height()*0.01+ "px";
+			
+			neckPositionElementArray[j][i] = element_neck_fret.rows[i].cells[0];
+			//element_neck_fret.rows[i].cells[0].innerHTML = j;
+			
+			/*element_neck_fret.rows[i].cells[0].style.backgroundColor = randomColor();
+			element_neck_fret.rows[i].cells[0].innerHTML = j+","+i;*/
+		}
+		document.body.appendChild(element_neck_fret);
+		element_neck_fret.style.zIndex = 4;
+		element_neck_fret.style.borderSpacing = windowHeight*0.018;
+	}
+
+	setPosition($(".fret_table")[0], 0.08, 0.22);
+	setPosition($(".fret_table")[1], 0.3, 0.22);
+	setPosition($(".fret_table")[2], 0.52, 0.22);
+	setPosition($(".fret_table")[3], 0.72, 0.22);
+	setPosition($(".fret_table")[4], 0.88, 0.22);
+}
+
+function randomColor()
+{
+	return Math.floor(Math.random()*16777215).toString(16);
+}
+
+function createElements()
+{
+	element_background.src = "back.png";
+	document.body.appendChild(element_background);
+	setPosition(element_background, 0, 0, 1, 1);
+
+	element_title.innerHTML = document.getElementById('title').innerHTML;
+	document.body.appendChild(element_title);
+	setPosition(element_title, 0.25, 0.047, 0.48, 0.16);
+	element_title.className = "text";
+
+	element_neck.src = "neck.png";
+	document.body.appendChild(element_neck);
+	setPosition(element_neck, 0, 0.22, 1, 0.42);
+	element_neck.style.boxShadow = "0px 5px 3px black";
+
+	element_bottom_stripe.src = "bottom_stripe.png";
+	document.body.appendChild(element_bottom_stripe);
+	setPosition(element_bottom_stripe, 0, 0.7, 1, 0.22);
+
+	document.body.appendChild(element_chord);
+	element_chord.innerHTML = $(chordElementList)[currentChordIndex].innerHTML;
+	setPosition(element_chord, 0.02, 0.68, 0.16, 0.28, 1.3);
+	element_chord.className = "chord";
+
+	document.body.appendChild(element_lyrics);
+	element_lyrics.innerHTML = $(lyricsElementList)[currentChordIndex].innerHTML;
+	setPosition(element_lyrics, 0.2, 0.7, 0.7, 0.2);
+	element_lyrics.className = "text";
+
+	element_logo.src = "logo.png";
+	document.body.appendChild(element_logo);
+	setPosition(element_logo, 0.74, 0.047, 0.2, 0.15);
+
+	document.body.appendChild(element_next);
+	element_next.innerHTML = $(chordElementList)[currentChordIndex+1].innerHTML;
+	setPosition(element_next, 0.1, 0.03, 0.1, 0.15, 1.3);
+	element_next.className = "next chord";
+}
+
+function setPosition(element, x, y, width, height, fontSize)
+{
+	if(y!=null)
+		element.style.left = x*windowWidth;
+	if(x!=null)
+		element.style.top = y*windowHeight;
+	if(width!=null)
+		element.style.width = (width*windowWidth);
+	if(height!=null)
+		element.style.height = (height*windowHeight);
+
+	if(fontSize!=null)
+		element.style.fontSize = $(element).height()*fontSize + "px";
+	else
+		element.style.fontSize = $(element).height()*0.6 + "px";
+	element.style.lineHeight = $(element).height()+ "px";
+	
+	//element.style.backgroundColor = randomColor();
+}
+
