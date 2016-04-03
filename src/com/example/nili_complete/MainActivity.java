@@ -11,8 +11,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Message;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +29,8 @@ import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,14 +50,17 @@ public class MainActivity extends Activity
 	public HashMap<String, String> songsMap = new HashMap<String, String>();
 
 	// javascript
-	String url = 			"file:///android_asset/song.html";
 	public  WebView			webView;
 	public	WebAppInterface webInterface;
 	public	String jsCommand;
 	
 	public Object waitConnection = new ReentrantLock();
 	
-
+	private boolean isAutoMode;
+	private ImageView changeModeButton;
+	private ImageView forwardButton;
+	private ImageView backwardButton;
+	
     @Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -60,6 +69,10 @@ public class MainActivity extends Activity
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		//Remove notification bar
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		// prevent locking of phone
+		PowerManager powerManager = (PowerManager)getApplicationContext().getSystemService(Context.POWER_SERVICE);
+		WakeLock wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "My Lock");
+		wakeLock.acquire();
 
 		setContentView(R.layout.activity_main);
 
@@ -71,9 +84,16 @@ public class MainActivity extends Activity
 		operator = new Operator();
 		webInterface = new WebAppInterface();
 		
+		
+		
         songsListView = (ListView) findViewById(R.id.songsList);
         setSongsList(); 
 		setWebView();
+		
+		changeModeButton = (ImageView) findViewById(R.id.IsAuto);
+		forwardButton = (ImageView) findViewById(R.id.Forward);
+		backwardButton = (ImageView) findViewById(R.id.Backward);
+		
 		
 		webInterface.set(this, operator);
     	webView.addJavascriptInterface(webInterface, "Android");
@@ -104,14 +124,52 @@ public class MainActivity extends Activity
         // connect java script to android
 
         readData.set(this, connectionManager.inputStream, operator); // this thread reads the incomming data from bluetooth
-		operator.set(this.connectionManager, this.webInterface);
+		operator.set(this.connectionManager, this.webInterface, this);
 
         webInterface.start();
         readData.start();
 		operator.start();
+
+		setUiAutoMode(false);
+		setMode(false);
 	}
 
-	private void setSongsList() 
+    private void setUiAutoMode(boolean isAuto)
+    {
+		this.forwardButton.setVisibility(View.GONE);
+		this.backwardButton.setVisibility(View.GONE);
+
+		
+		if(isAuto)
+		{
+			changeModeButton.setBackgroundResource(R.drawable.auto);
+			this.forwardButton.setVisibility(View.GONE);
+			this.backwardButton.setVisibility(View.GONE);
+		}
+		else
+		{
+			changeModeButton.setBackgroundResource(R.drawable.manual);
+			this.forwardButton.setVisibility(View.VISIBLE);
+			this.backwardButton.setVisibility(View.VISIBLE);
+		}
+    }
+    
+	private void setMode(boolean isAuto)
+	{
+		isAutoMode = isAuto;
+		
+		Message message = new Message();
+		message.arg1 = Commands.WebApp.eventUiChangeMode;
+		message.obj = Boolean.toString(isAutoMode);
+		this.webInterface.mHandler.sendMessage(message);
+	}
+    
+	public boolean isAutoMode()
+	{
+		return isAutoMode;
+	}
+	
+    private void setSongsList() 
 	{
 		this.songsListView.setVisibility(View.GONE);
 
@@ -235,6 +293,28 @@ public class MainActivity extends Activity
 	{
 		this.songsListView.setVisibility(View.VISIBLE);
 	}
+
+    public void eventUiToggleMode(View v)
+    {
+    	isAutoMode = !isAutoMode;
+		
+    	setMode(isAutoMode);
+		setUiAutoMode(isAutoMode);
+    }
+
+    public void eventUiForward(View v)
+    {
+		Message message = new Message();
+		message.arg1 = Commands.Operator.eventForward;
+		this.operator.mHandler.sendMessage(message);
+    }
+    
+    public void eventUiBackward(View v)
+    {
+		Message message = new Message();
+		message.arg1 = Commands.Operator.eventBackward;
+		this.operator.mHandler.sendMessage(message);
+    }
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {

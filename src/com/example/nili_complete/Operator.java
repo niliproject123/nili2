@@ -10,6 +10,7 @@ import android.util.Log;
 
 public class Operator extends Thread
 {
+	private MainActivity		mainActivity;
 	private String 				currentChordString;
 	private final char 			blinkRateChar = '5';
 	private int 				positionCount;
@@ -34,19 +35,29 @@ public class Operator extends Thread
 					receivedPressFromUser((String)message.obj);
 					return;
 				}
-				if(message.arg1==Commands.Operator.addChord)
+				else if(message.arg1==Commands.Operator.addChord)
 				{
 					addChordToChordList((String)message.obj);
 					return;
 				}
-				if(message.arg1==Commands.Operator.finishedAddingChords)
+				else if(message.arg1==Commands.Operator.finishedAddingChords)
 				{
 					initialize();
 					return;
 				}
-				if(message.arg1==Commands.Operator.restart)
+				else if(message.arg1==Commands.Operator.restart)
 				{
 					restart();
+					return;
+				}
+				else if(message.arg1==Commands.Operator.eventForward)
+				{
+					eventForward();
+					return;
+				}
+				else if(message.arg1==Commands.Operator.eventBackward)
+				{
+					eventBackward();
 					return;
 				}
 			}
@@ -72,18 +83,6 @@ public class Operator extends Thread
 		String btReturnedString = currentChordString;
 		String jsReturnedString = currentChordString;
 
-		// waiting for user to lift fingers to move to next chord
-		if(this.waitingForNoPress)
-		{
-			if(receivedSwitchString.equalsIgnoreCase("000000000000000000000000"))
-			{
-				this.sendStringToBt(this.currentChordString);
-				sendLiftFingersToJs();
-				this.waitingForNoPress = false;
-			}
-			return;
-		}
-		
 		int pressedCorrect = 0;
 		for(int i=0; i<receivedSwitchString.length(); i++)
 		{
@@ -102,12 +101,33 @@ public class Operator extends Thread
 				jsReturnedString = jsReturnedString.substring(0,i) + "i" + jsReturnedString.substring(i+1);
 			}
 		}
+
+		// waiting for user to lift fingers to move to next chord
+		if(this.waitingForNoPress && mainActivity.isAutoMode())
+		{
+			if(receivedSwitchString.equalsIgnoreCase("000000000000000000000000"))
+			{
+				this.sendStringToBt(this.currentChordString);
+				sendLiftFingersToJs();
+				this.waitingForNoPress = false;
+			}
+			return;
+		}
+
 		
+		this.sendStringToBt(btReturnedString);
+		this.sendStringToJs(jsReturnedString);
+
 		// pressed correctly, perform strumming animation and wait for user to lift fingers to move to next chord
 		if(pressedCorrect==this.positionCount)
 		//if(pressedCorrect>=1)
 		{
-			this.waitingForNoPress = true;
+
+			if(mainActivity.isAutoMode())
+			{
+				goToNextChord();
+				this.waitingForNoPress = true;
+			}
 
 			this.sendStringToBt("111111111111111111111111");
 			try {
@@ -115,18 +135,14 @@ public class Operator extends Thread
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-
-			goToNextChord();
+			
 			sendStringToBt(currentChordString);
 			sendPressedCorrectToJs(jsReturnedString);
-
-			return;
 		}
 		
-		this.sendStringToBt(btReturnedString);
-		this.sendStringToJs(jsReturnedString);
 	}
 
+	
 	public void initialize()
 	{
 		if(chordList.size()==0)
@@ -158,18 +174,48 @@ public class Operator extends Thread
 			e.printStackTrace();
 		}
 	}
-	
-	private void goToNextChord()
+
+	private void eventForward()
 	{
+		if(goToNextChord())
+		{
+			Message message = new Message();
+			message.arg1 = Commands.WebApp.eventForward;
+			this.webInterface.mHandler.sendMessage(message);
+		}
+	}
+	
+	private void eventBackward()
+	{
+		if(goToPreviousChord())
+		{
+			Message message = new Message();
+			message.arg1 = Commands.WebApp.eventBackward;
+			this.webInterface.mHandler.sendMessage(message);
+		}
+	}
+
+	private boolean goToNextChord()
+	{
+		if(this.currentChordIndex == chordList.size()-1) return false;
 		this.currentChordIndex++;
 		setCurrentChord(this.currentChordIndex);
+		return true;
+	}
+	
+	private boolean goToPreviousChord()
+	{
+		if(this.currentChordIndex == 0) return false;
+		this.currentChordIndex--;
+		setCurrentChord(this.currentChordIndex);
+		return true;
 	}
 	
 	private void sendPressedCorrectToJs(String positionString) 
 	{
 		Message message = new Message();
 		message.arg1 = Commands.WebApp.eventPressedCorrect;
-		message.obj = addJsDelimeters(positionString);
+		message.obj = positionString;
 		this.webInterface.mHandler.sendMessage(message);
 	}
 
@@ -216,7 +262,7 @@ public class Operator extends Thread
 
 		Message message = new Message();
 		message.arg1 = Commands.ConnectionManager.sendToBt;
-		message.obj = addJsDelimeters(data);
+		message.obj = addBtDelimeters(data);
 		this.connectionManager.mHandler.sendMessage(message);
 	}
 	
@@ -224,7 +270,7 @@ public class Operator extends Thread
 	{
 		Message message = new Message();
 		message.arg1 = Commands.WebApp.sendStringToJs;
-		message.obj = addJsDelimeters(positionString);
+		message.obj = positionString;
 		this.webInterface.mHandler.sendMessage(message);
 	}
 	
@@ -248,16 +294,11 @@ public class Operator extends Thread
 		return string.substring(1, string.length()-1);
 	}
 	
-	private String addJsDelimeters(String string)
-	{
-		return "\"" + string + "\"";
-	}
-
-
-	public void set(ConnectionManager connectionManager, WebAppInterface webInterface) 
+	public void set(ConnectionManager connectionManager, WebAppInterface webInterface, MainActivity mainActivity) 
 	{
 		this.connectionManager = connectionManager;
 		this.webInterface = webInterface;
+		this.mainActivity = mainActivity;
 		Thread.currentThread().setName("Operator Thread");
 	}
 }

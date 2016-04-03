@@ -9,17 +9,26 @@ function eventLiftFingers()
 
 	console.log("eventLiftFingers");
 
-	stopStrummingAnimation();
-
-	setAllNeckPositionsOff(false);
-	setLyrics();
-	setChordText();
-	setFingering(getPositionListOfChordText(getChordText(currentChordIndex)));
-	setNeckPositionListOn(getPositionListOfChordText(getChordText(currentChordIndex)));
-	
-	element_chord.style.color = 'red';
-
+	eventStopStrummingAnimation();
+	displayCurrentChord()
 }
+
+function eventForward()
+{
+	console.log("eventForward: ");
+	eventStopStrummingAnimation();
+	moveToNextChord();
+	displayCurrentChord();
+}
+
+function eventBackward()
+{
+	console.log("eventBackward: ");
+	eventStopStrummingAnimation();
+	moveToPreviousChord();
+	displayCurrentChord()
+}
+
 
 function eventPressedCorrect(positionString)
 {
@@ -29,12 +38,32 @@ function eventPressedCorrect(positionString)
 
 	receivePositionStringFromAndroid(positionString);
 
-	startStrummingAnimation(200, getChordTopString(getChordText(currentChordIndex)));
+	eventStartStrummingAnimation();
 	
-	moveToNextChord()
-	setNeckPositionListOn(getPositionListOfChordText(getChordText(currentChordIndex)));
+	if(isAutoMode)
+	{
+		moveToNextChord()
+		setNeckPositionListOn(getPositionListOfChordText(getChordText(currentChordIndex)));
+	}
 
 	element_chord.style.color = 'green';
+}
+
+function eventStartStrummingAnimation()
+{
+	startStrummingAnimation(200, getChordTopString(getChordText(currentChordIndex)));
+}
+
+
+function eventStopStrummingAnimation()
+{
+	stopStrummingAnimation();
+}
+
+function setMode(isAuto)
+{
+	console.log("eventSetMode: " + isAuto);
+	isAutoMode = isAuto;
 }
 
 function eventSetTimed(tick)
