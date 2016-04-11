@@ -40,25 +40,6 @@
     	android:background="#FFFFFF"
         android:visibility="gone"
         />
-
-    <ImageView
-        android:id="@+id/restart"
-		android:onClick="onButtonRestart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="17dp"
-        android:src="@android:drawable/ic_popup_sync" />
-    
-     <ImageView
-         android:id="@+id/showSongsList"
-         android:onClick="onButtonShowSongsList"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_alignParentLeft="true"
-         android:layout_below="@+id/restart"
-         android:src="@android:drawable/ic_menu_sort_by_size" />
     
     <ListView
         android:id="@+id/songsList"
@@ -82,24 +63,41 @@
         android:onClick="eventUiToggleMode" />
 
     <ImageView
+        android:id="@+id/restart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:onClick="onButtonRestart"
+        android:src="@android:drawable/ic_popup_sync" />
+
+    <ImageView
+        android:id="@+id/showSongsList"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/restart"
+        android:onClick="onButtonShowSongsList"
+        android:src="@android:drawable/ic_menu_sort_by_size" />
+
+    <ImageView
         android:id="@+id/Forward"
-        android:layout_below="@+id/IsAuto"
-        android:layout_toLeftOf="@+id/songsList"
         android:layout_width="30dp"
-    	android:layout_height="30dp"
-    	android:scaleType="fitXY"
+        android:layout_height="30dp"
+        android:layout_alignTop="@+id/IsAuto"
+        android:layout_toRightOf="@+id/IsAuto"
         android:onClick="eventUiBackward"
+        android:scaleType="fitXY"
         android:src="@drawable/backward" />
 
     <ImageView
         android:id="@+id/Backward"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/Forward"
         android:layout_width="30dp"
-    	android:layout_height="30dp"
-    	android:scaleType="fitXY"
-        android:layout_toLeftOf="@+id/songsList"
+        android:layout_height="30dp"
+        android:layout_alignTop="@+id/Forward"
+        android:layout_toRightOf="@+id/Forward"
         android:onClick="eventUiForward"
+        android:scaleType="fitXY"
         android:src="@drawable/forward" />
 
 </RelativeLayout>
