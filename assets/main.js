@@ -81,25 +81,19 @@ if(!isAndroid)
 	document.body.onclick = 
 		function()
 		{
-			if(clickIndex==0)
+			if(clickIndex%2==0)
 			{
-				eventForward();
+				eventPressedCorrect();
+				setNeckPositionListOff([[3,1], [2,5], [3,6]], true);
+				setNeckPositionListCorrect([[3,1,3], [2,5,2], [3,6,1]]);
+				startStrummingAnimation(200, getChordTopString(getChordText(currentChordIndex)));
+				element_chord.style.color = 'green';
+				element_lyrics.style.color = 'green';
 			} 
-			else if (clickIndex==1)
+			else if (clickIndex%2==1)
 			{
-				eventForward();
+				eventLiftFingers();
 			} 
-			else if (clickIndex==2)
-			{
-				eventBackward();
-			}
-			else if (clickIndex==3)
-			{
-				eventBackward();
-			}
-			else if (clickIndex==4)
-			{
-			}
 			clickIndex++;
 		};
 }

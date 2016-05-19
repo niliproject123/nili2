@@ -130,8 +130,8 @@ public class MainActivity extends Activity
         readData.start();
 		operator.start();
 
-		setUiAutoMode(false);
-		setMode(false);
+		//setUiAutoMode(false);
+		//setMode(false);
 	}
 
     private void setUiAutoMode(boolean isAuto)
