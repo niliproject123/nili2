@@ -6,12 +6,12 @@
 	<section name="JavaElementSearchActions">
 	</section>
 	<section name="RefactoringWizard.preview">
-		<item value="330" key="height"/>
-		<item value="530" key="width"/>
-	</section>
-	<section name="RenameInformationPopup">
+		<item value="310" key="height"/>
+		<item value="510" key="width"/>
 	</section>
 	<section name="org.eclipse.ltk.ui.refactoring.settings">
+	</section>
+	<section name="RenameInformationPopup">
 	</section>
 	<section name="org.eclipse.wst.jsdt.internal.ui.typehierarchy.QuickHierarchy">
 		<item value="false" key="org.eclipse.wst.jsdt.internal.ui.typehierarchy.HierarchyInformationControlDIALOG_USE_PERSISTED_LOCATION"/>

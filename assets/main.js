@@ -44,6 +44,7 @@ var blinkingList;
 var isBlinkOn = false;
 var BLINK_INTERVAL = 200;
 
+var isAutoMode;
 
 getChordsLyricsAndTicks();
 
@@ -80,23 +81,19 @@ if(!isAndroid)
 	document.body.onclick = 
 		function()
 		{
-			if(clickIndex==0)
+			if(clickIndex%2==0)
 			{
-				receivePositionStringFromAndroid("0000001000010c0000000000");
+				eventPressedCorrect();
+				setNeckPositionListOff([[3,1], [2,5], [3,6]], true);
+				setNeckPositionListCorrect([[3,1,3], [2,5,2], [3,6,1]]);
+				startStrummingAnimation(200, getChordTopString(getChordText(currentChordIndex)));
+				element_chord.style.color = 'green';
+				element_lyrics.style.color = 'green';
 			} 
-			else if (clickIndex==1)
+			else if (clickIndex%2==1)
 			{
-				eventLiftFingers()
+				eventLiftFingers();
 			} 
-			else if (clickIndex==2)
-			{
-			}
-			else if (clickIndex==3)
-			{
-			}
-			else if (clickIndex==4)
-			{
-			}
 			clickIndex++;
 		};
 }
@@ -227,9 +224,7 @@ function initialize()
 	
 	if(chordList.length!=0)
 	{
-		setChordText();
-		setLyrics();
-		setNeckPositionListOn(getPositionListOfChordText(getChordText(currentChordIndex)));
+		displayCurrentChord();
 	}
 }
 
@@ -308,13 +303,22 @@ function moveToNextChord()
 	currentChordIndex++;
 }
 
-function eventBack()
+function moveToPreviousChord()
 {
-	if(currentChordIndex-1<0) return;
+	if(currentChordIndex<=0) return;
 
 	currentChordIndex--;
-	setChordText();
+}
+
+function displayCurrentChord()
+{
+	setAllNeckPositionsOff(false);
 	setLyrics();
+	setChordText();
+	setFingering(getPositionListOfChordText(getChordText(currentChordIndex)));
+	setNeckPositionListOn(getPositionListOfChordText(getChordText(currentChordIndex)));
+	
+	element_chord.style.color = 'red';
 }
 
 function setChordText()

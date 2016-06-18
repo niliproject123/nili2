@@ -27,12 +27,27 @@ public class WebAppInterface extends Thread
 				}
 				if(message.arg1 == Commands.WebApp.eventPressedCorrect)
 				{
-					pressedCorrect_Animation((String)message.obj);
+					pressedCorrect_Animation(addJsDelimeters((String)message.obj));
 					return;
 				}
 				if(message.arg1 == Commands.WebApp.sendStringToJs)
 				{
-					sendPositionStringToJs((String)message.obj);
+					sendPositionStringToJs(addJsDelimeters((String)message.obj));
+					return;
+				}
+				if(message.arg1 == Commands.WebApp.eventUiChangeMode)
+				{
+					changeMode(addJsDelimeters((String)message.obj));
+					return;
+				}
+				if(message.arg1 == Commands.WebApp.eventForward)
+				{
+					eventForward();
+					return;
+				}
+				if(message.arg1 == Commands.WebApp.eventBackward)
+				{
+					eventBackward();
 					return;
 				}
 			}
@@ -111,10 +126,25 @@ public class WebAppInterface extends Thread
 		}
 
 		this.operator.mHandler.sendMessage(operatorMessage);
+	}
 
+	private String addJsDelimeters(String string)
+	{
+		return "\"" + string + "\"";
+	}
+
+	private void changeMode(String isAuto)
+	{
+		sendMessageToJs("setMode(" + isAuto + ");");
 	}
 	
+	private void eventForward()
+	{
+		sendMessageToJs("eventForward();");
+	}
 	
-
-
+	private void eventBackward()
+	{
+		sendMessageToJs("eventBackward();");
+	}
 }
